@@ -1,5 +1,5 @@
 from .forms import Form_Livro
-from .models import Livro
+from .models import Livro, Turmas
 
 def adcionar_livro(request):
 
@@ -12,4 +12,13 @@ def adcionar_livro(request):
         print(f"O livro {Livro.titulo} foi adcionardo por {request.user}")
 
     else: adcionando_livro = Form_Livro()
+
+
+def todas_turmas(Turmas):
+    turma = Turmas.objects.all()
+    return turma
+
+
+livros = Livro.objects.all()
+
 

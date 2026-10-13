@@ -1,11 +1,14 @@
 from django.shortcuts import render
-from .models import Pessoa
+from Biblioteca.models import Pessoa
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from Biblioteca.function_view import todas_turmas
+from Biblioteca.models import Turmas
 
 def registrar_user_view(request):
+    ver = []
     if request.method == 'POST':
 
         username = request.POST.get("username")
@@ -25,24 +28,31 @@ def registrar_user_view(request):
             nome=nome,
             turma_id=turma_id
         )
-
-        return redirect('login')
-
-    return render(request, 'cadastro.html')
+        ver.append({
+            "username": criando_user.username,
+            "email": criando_user.email
+        })
+        print(f"Um usuario foi cadastrado:{ver}")
+        return redirect('login') 
+    
+    turmas = todas_turmas(Turmas)
+    return render(request, 'cadastro.html',{'turmas':turmas})
 
 
 def login_view(request):
+    
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-    user = authenticate(request, email=email, password=password)
+        user = authenticate(request, email=email, password=password)
 
-    if user is not None:
-        login(request, user)
+        if user is not None:
+            login(request, user)
 
-        #RAMON LEMBRA DE DEPOIS ADCIONAR O REDDIRECT PRO ADMIN
-        return redirect ('')
+            #RAMON LEMBRA DE DEPOIS ADCIONAR O REDDIRECT PRO ADMIN
+            print(f"O usuario {user} logou")
+            return redirect ('')
 
     else:
         messages.error(request, 'Usuário ou senha inválidos.')
