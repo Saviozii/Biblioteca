@@ -1,5 +1,53 @@
 from .forms import Form_Livro
-from .models import Livro, Turmas
+from .models import Livro, Turmas, Emprestimo
+from django.db.models import Count
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+#Consultas:
+
+def todas_turmas(Turmas):
+    turma = Turmas.objects.all()
+    return turma
+
+
+def todos_livros(Livro):
+    livros = Livro.objects.all()
+    return livros
+
+def recomendações(Livro):
+    mais_emprestados = Livro.objects.annotate(
+        tota_emprestimos=Count('emprestimo')
+    ).order_by('-total_emprestimos')[:10]
+    return mais_emprestados
+
+def livros_emprestados():
+    emprestados = Emprestimo.objects.filter(status="E")
+    total_emprestados = Emprestimo.objects.filter(status="E").count()
+    return emprestados, total_emprestados
+
+
+#Para pagina publica
+@login_required
+def pedir_livro(request,livro_id):
+    if request.method != "POST":
+        return redirect("Catalogo")
+
+    pessoa = getattr(request.user, "pessoa", None)
+    if pessoa is None:
+        messages.error(request, "Seu usuário não tem cadastro")
+        return redirect("Catalogo")
+
+    Livro = get_object_or_404(Livro, id=livro_id)
+
+
+
+
+
+
+
+#Para pagina adm:
 
 def adcionar_livro(request):
 
@@ -13,12 +61,6 @@ def adcionar_livro(request):
 
     else: adcionando_livro = Form_Livro()
 
-
-def todas_turmas(Turmas):
-    turma = Turmas.objects.all()
-    return turma
-
-
-livros = Livro.objects.all()
-
-
+def efetuar_devolução(request):
+    ...
+ 

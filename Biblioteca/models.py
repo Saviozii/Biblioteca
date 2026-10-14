@@ -27,11 +27,14 @@ class Livro(models.Model):
     def __str__(self):
         return self.titulo
 
-
-class Biblioteca(models.Model):
+class Data_time(models.Model):
     data = models.DateField(db_index=True)
     data_do_emprestimo = models.DateField(null=True, blank=True)
     data_da_devolucao = models.DateField(null=True, blank=True)
+
+
+class Biblioteca(models.Model):
+    Tempo = models.ForeignKey(Data_time,on_delete=models.CASCADE)
     usuario = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
     livros = models.ForeignKey(Livro,on_delete=models.CASCADE)
     
@@ -41,9 +44,18 @@ class Biblioteca(models.Model):
         ("D", "Devolvido"),)
     status = models.CharField(max_length=1,choices=STATUS, default="A")
 
+
 class Emprestimo(models.Model):
     user = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
-    
+    livro = models.ForeignKey(Livro,on_delete=models.CASCADE)
+    Tempo = models.ForeignKey(Data_time,on_delete=models.CASCADE)
+    data_devolucao_prevista = models.DateField(null=True, blank=True)
+    data_devolvido = models.DateTimeField(null=True, blank=True)
+    STATUS = (
+        ("E","Emprestado"),
+        ("D","Devolvido"),
+    )
+    status= models.CharField(max_length=1,choices=STATUS,default="E")
 
 
 
