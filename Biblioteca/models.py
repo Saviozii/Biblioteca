@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
 
 class Turmas(models.Model):
@@ -14,7 +15,7 @@ class Pessoa(models.Model):
     nome = models.CharField(max_length=100)
  
     def __str__(self):
-        return self.usuario.username
+        return self.nome
 
 
 class Livro(models.Model):
@@ -27,28 +28,19 @@ class Livro(models.Model):
     def __str__(self):
         return self.titulo
 
-class Data_time(models.Model):
-    data = models.DateField(db_index=True)
-    data_do_emprestimo = models.DateField(null=True, blank=True)
-    data_da_devolucao = models.DateField(null=True, blank=True)
+    @property
+    def esta_emprestado(self):
+        return self.emprestimos.filter(status="E").exists()
 
-
-class Biblioteca(models.Model):
-    Tempo = models.ForeignKey(Data_time,on_delete=models.CASCADE)
-    usuario = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
-    livros = models.ForeignKey(Livro,on_delete=models.CASCADE)
+    @property
+    def disponivel(self):
+        return not self.esta_emprestado
     
-    STATUS = (
-        ("A","Armazenado"),
-        ("E", "Emprestado"),
-        ("D", "Devolvido"),)
-    status = models.CharField(max_length=1,choices=STATUS, default="A")
-
 
 class Emprestimo(models.Model):
-    user = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
+    pessoa = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
     livro = models.ForeignKey(Livro,on_delete=models.CASCADE)
-    Tempo = models.ForeignKey(Data_time,on_delete=models.CASCADE)
+    data_emprestimo = models.DateField(auto_now_add=True)
     data_devolucao_prevista = models.DateField(null=True, blank=True)
     data_devolvido = models.DateTimeField(null=True, blank=True)
     STATUS = (
@@ -56,6 +48,16 @@ class Emprestimo(models.Model):
         ("D","Devolvido"),
     )
     status= models.CharField(max_length=1,choices=STATUS,default="E")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["livro"],
+                condition=Q(status="E"),
+                name="um_emprestimo_ativo_por_livro",
+            )
+        ]
+
 
 
 

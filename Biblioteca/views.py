@@ -3,7 +3,7 @@ from .models import Pessoa
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
-from function_view import todos_livros, recomendações
+from function_view import todos_livros, recomendações, pedir_livro
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 #Verifica se é adm
@@ -13,10 +13,10 @@ def is_staff(usuario):
 def base_catalogo(request):
     elements = {
         "All_livros":todos_livros(),
-        "Recomendation": recomendações(),
-
+        "Recomendation": recomendações()
     }
     return render(request,"catalogo.html",{'elements':elements})
+
 
 
 @user_passes_test(is_staff, login_url='login')
