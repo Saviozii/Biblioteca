@@ -13,7 +13,6 @@ def todas_turmas(Turmas):
     turma = Turmas.objects.all()
     return turma
 
-
 def todos_livros(Livro):
     livros = Livro.objects.all()
     return livros
@@ -24,14 +23,8 @@ def recomendações(Livro):
     ).order_by('-total_emprestimos')[:10]
     return mais_emprestados
 
-def livros_emprestados():
-    emprestados = Emprestimo.objects.filter(status="E")
-    total_emprestados = Emprestimo.objects.filter(status="E").count()
-    return emprestados, total_emprestados
-
-
 #Para pagina publica
-@login_required
+""" @login_required
 def pedir_livro(request,livro_id):
     if request.method != "POST":
         return redirect("Catalogo")
@@ -59,7 +52,27 @@ def pedir_livro(request,livro_id):
         request,
         f"O livro “{livro.titulo}” foi emprestado.E deve ser entregue até {prazo:%d/%m/%Y}.",
     )
-    return redirect("catalogo")
+    return redirect("catalogo") """
+
+def pedir_livro(pessoa,livro):
+    
+    tem_livro = Emprestimo.objects.filter(livro=livro, status="E").exists()
+    prazo = date.today() + timedelta(days=15)
+    
+    if pessoa is None:
+        return redirect("Catalogo")
+
+    if tem_livro:
+        messages.error("O livro {livro.titulo} já está emprestado")
+        return redirect("Catalogo")
+    
+    else:
+        Emprestimo.objects.create(
+            pessoa=pessoa,
+            livro=livro,
+            data_devolucao_prevista=prazo,)
+
+    
         
 
 
@@ -77,6 +90,27 @@ def adcionar_livro(request):
 
     else: adcionando_livro = Form_Livro()
 
-def efetuar_devolução(request):
-    ...
- 
+
+def livros_emprestados():
+    emprestados = Emprestimo.objects.filter(status="E")
+    total_emprestados = Emprestimo.objects.filter(status="E").count()
+    return emprestados, total_emprestados
+
+
+def efetuar_devolução(request,emprestimo_id):
+    
+    if request.method != "POST":
+        return redirect ('admin_base')
+    
+    emprestimo = get_object_or_404(
+        Emprestimo,
+        id=emprestimo_id
+    )
+
+    if emprestimo.status == "E":
+        emprestimo.status = "D"
+        emprestimo.save()
+        messages.success(request,f"O Livro {emprestimo.livro.titulo} foi devolvido com sucesso!.")
+        return redirect ('admin_base')
+
+#Analise/Consultas
