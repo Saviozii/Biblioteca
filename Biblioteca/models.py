@@ -38,8 +38,8 @@ class Livro(models.Model):
     
 
 class Emprestimo(models.Model):
-    pessoa = models.ForeignKey(Pessoa,on_delete=models.CASCADE)
-    livro = models.ForeignKey(Livro,on_delete=models.CASCADE)
+    pessoa = models.ForeignKey(Pessoa,on_delete=models.CASCADE,related_name="emprestimos")
+    livro = models.ForeignKey(Livro,on_delete=models.CASCADE,related_name="emprestimos")
     data_emprestimo = models.DateField(auto_now_add=True)
     data_devolucao_prevista = models.DateField(null=True, blank=True)
     data_devolvido = models.DateTimeField(null=True, blank=True)

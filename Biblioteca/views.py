@@ -1,12 +1,12 @@
 from django.shortcuts import render
-from .models import Pessoa
+from .models import Pessoa, Livro
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
-from function_view import todos_livros, recomendações, pedir_livro
+from .function_view import todos_livros, recomendações, pedir_livro
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
-from .function_view import pedir_livro
+from django.contrib import messages
 
 #Verifica se é adm
 def is_staff(usuario):
@@ -21,15 +21,11 @@ def base_catalogo(request):
 
 @login_required
 def inf_livro(request,livro_id):
-    livro = get_object_or_404(livro, id=livro_id)
-    back_url = request.META.get('HTTP_REFERER', '/Catalogo')
-    elements = {
-    "Livro":livro,
-    "Back_url":back_url,
-    "Pedir_Livro":pedir_livro(request,livro_id)
-    }
-    return render(request,"inf_livro.html",{"elements":elements})
-         
+    ...
+            
+
+
+
 @user_passes_test(is_staff, login_url='login')
 def base_admin(request):
     ...
