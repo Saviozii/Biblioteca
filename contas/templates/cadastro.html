@@ -59,34 +59,68 @@
             margin-top: 16px;
             font-size: 14px;
         }
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 4px 0 0;
+            color: #991b1b;
+            font-size: 13px;
+        }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 8px;
+        }
+        .messages li {
+            background: #dcfce7;
+            color: #166534;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Cadastro</h1>
 
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         <form method="POST">
             {% csrf_token %}
 
-            <label for="nome">Nome</label>
-            <input type="text" id="nome" name="nome" required>
+            {{ form.non_field_errors }}
 
-            <label for="username">Usuário</label>
-            <input type="text" id="username" name="username" required>
+            <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }}</label>
+            {{ form.nome }}
+            {{ form.nome.errors }}
 
-            <label for="email">E-mail</label>
-            <input type="email" id="email" name="email" required>
+            <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            {{ form.username }}
+            {{ form.username.errors }}
 
-            <label for="password">Senha</label>
-            <input type="password" id="password" name="password" required>
+            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {{ form.email.errors }}
 
-            <label for="turma">Turma</label>
-            <select id="turma" name="turma" required>
-                <option value="" disabled selected>Selecione a turma</option>
-                {% for turma in turmas %}
-                    <option value="{{ turma.id }}">{{ turma }}</option>
-                {% endfor %}
-            </select>
+            <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+
+            <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+
+            <label for="{{ form.turma.id_for_label }}">{{ form.turma.label }}</label>
+            {{ form.turma }}
+            {{ form.turma.errors }}
 
             <button type="submit">Cadastrar</button>
         </form>

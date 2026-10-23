@@ -1,61 +1,50 @@
-from django.shortcuts import render
-from Biblioteca.models import Pessoa
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
 from django.contrib import messages
-from Biblioteca.function_view import todas_turmas
-from Biblioteca.models import Turmas
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from .forms import CadastroForm
+
 
 def registrar_user_view(request):
-    ver = []
     if request.method == 'POST':
+        form = CadastroForm(request.POST)
 
-        username = request.POST.get("username")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        nome = request.POST.get("nome")
-        turma_id = request.POST.get("turma")
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Cadastro realizado com sucesso. Faça login.')
+            return redirect('login')
+    else:
+        form = CadastroForm()
 
-        criando_user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-            )
-
-        Pessoa.objects.create(
-            usuario=criando_user,
-            nome=nome,
-            turma_id=turma_id
-        )
-        ver.append({
-            "username": criando_user.username,
-            "email": criando_user.email
-        })
-        print(f"Um usuario foi cadastrado:{ver}")
-        return redirect('login') 
-    
-    turmas = todas_turmas(Turmas)
-    return render(request, 'cadastro.html',{'turmas':turmas})
+    return render(request, 'cadastro.html', {'form': form})
 
 
 def login_view(request):
     
     if request.method == 'POST':
-        email = request.POST.get('email')
+        username = request.POST.get('username')
         password = request.POST.get('password')
 
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
-
-            #RAMON LEMBRA DE DEPOIS ADCIONAR O REDDIRECT PRO ADMIN
             print(f"O usuario {user} logou")
-            return redirect ('')
 
-    else:
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()},
+            ):
+                return redirect(next_url)
+
+            if user.is_staff:
+                return redirect('admin_base')
+
+            return redirect('Catalogo')
+
         messages.error(request, 'Usuário ou senha inválidos.')
 
-    return render(request , 'login.html')
+    return render(request, 'login.html')
 

@@ -8,38 +8,47 @@ from django.db import transaction
 from datetime import date, timedelta
 #Consultas:
 
-def todas_turmas(Turmas):
+def todas_turmas():
     turma = Turmas.objects.all()
     return turma
 
-def todos_livros(Livro):
+def todos_livros():
     livros = Livro.objects.all()
     return livros
 
-def recomendações(Livro):
+def recomendações():
     mais_emprestados = Livro.objects.annotate(
         total_emprestimos=Count('emprestimos')
     ).order_by('-total_emprestimos')[:10]
     return mais_emprestados
 
-def pedir_livro(pessoa,livro):
-    ...
-        
 
+
+#pagina usuario:
+def pedir_livro(pessoa,livro,prazo):
+    Emprestimo.objects.create(
+        pessoa=pessoa,
+        livro=livro,
+        data_devolucao_prevista=prazo,
+    )
 
 #Para pagina adm:
 
 def adcionar_livro(request):
-
     if request.method == 'POST':
-        adcionando_livro = Form_Livro(request.POST,request.FILES)
+        adcionando_livro = Form_Livro(request.POST, request.FILES)
 
         if adcionando_livro.is_valid():
-            adcionando_livro.save()
+            livro = adcionando_livro.save()
+            messages.success(
+                request,
+                f'O livro "{livro.titulo}" foi adicionado ao acervo.',
+            )
+            return Form_Livro()
+    else:
+        adcionando_livro = Form_Livro()
 
-        print(f"O livro {Livro.titulo} foi adcionardo por {request.user}")
-
-    else: adcionando_livro = Form_Livro()
+    return adcionando_livro
 
 
 def livros_emprestados():
@@ -63,5 +72,3 @@ def efetuar_devolução(request,emprestimo_id):
         emprestimo.save()
         messages.success(request,f"O Livro {emprestimo.livro.titulo} foi devolvido com sucesso!.")
         return redirect ('admin_base')
-
-#Analise/Consultas
