@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from contas.views import registrar_user_view,login_view
 from Biblioteca.views import base_catalogo,base_admin,inf_livro,adcionar_livro_view
 

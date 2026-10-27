@@ -2,3 +2,5 @@ venv
 .env
 .opencode
 db.sqlite3
+Biblioteca/__pycache__
+app/__pycache__
