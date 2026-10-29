@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="dark" data-density="comfortable">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de empréstimos | Biblioteca</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem("bib-theme");
+                var density = localStorage.getItem("bib-density");
+                var accent = localStorage.getItem("bib-accent");
+                var root = document.documentElement;
+                if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+                if (density === "compact" || density === "comfortable") root.setAttribute("data-density", density);
+                if (accent) root.style.setProperty("--accent", accent);
+            } catch (e) {}
+        })();
+    </script>
+
+    <style>
+        :root {
+            --accent: #34d399;
+            --accent-ink: #052e22;
+            --accent-text: color-mix(in srgb, var(--accent) 55%, var(--text));
+            --font-sans: "Fira Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            --font-mono: "Fira Code", ui-monospace, "SFMono-Regular", monospace;
+            --radius-xl: 26px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 9px;
+            --gap: 1.15rem;
+            --pad: 1.5rem;
+            --row-pad: 0.95rem;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        html[data-theme="dark"] {
+            --bg: #080d17;
+            --bg-glow-1: rgba(52, 211, 153, 0.20);
+            --bg-glow-2: rgba(56, 189, 248, 0.16);
+            --bg-glow-3: rgba(139, 92, 246, 0.16);
+            --surface: rgba(22, 30, 47, 0.68);
+            --surface-strong: rgba(27, 36, 56, 0.86);
+            --surface-soft: rgba(148, 163, 184, 0.08);
+            --text: #f1f5f9;
+            --text-soft: #cbd5e1;
+            --muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.18);
+            --border-strong: rgba(148, 163, 184, 0.32);
+            --shadow: 0 30px 70px -34px rgba(0, 0, 0, 0.92);
+            --shadow-hover: 0 38px 80px -30px rgba(0, 0, 0, 0.95);
+            --danger: #f87171;
+            --danger-soft: rgba(248, 113, 113, 0.16);
+            --good: #34d399;
+            --good-soft: rgba(52, 211, 153, 0.14);
+            --warn: #fbbf24;
+            --warn-soft: rgba(251, 191, 36, 0.16);
+            --ring: #f8fafc;
+            --scrim: rgba(8, 13, 23, 0.55);
+            color-scheme: dark;
+        }
+
+        html[data-theme="light"] {
+            --bg: #eef2f8;
+            --bg-glow-1: rgba(16, 185, 129, 0.22);
+            --bg-glow-2: rgba(14, 165, 233, 0.18);
+            --bg-glow-3: rgba(139, 92, 246, 0.16);
+            --surface: rgba(255, 255, 255, 0.74);
+            --surface-strong: rgba(255, 255, 255, 0.92);
+            --surface-soft: rgba(15, 23, 42, 0.05);
+            --text: #0f172a;
+            --text-soft: #1e293b;
+            --muted: #5b6b83;
+            --border: rgba(15, 23, 42, 0.12);
+            --border-strong: rgba(15, 23, 42, 0.22);
+            --shadow: 0 26px 60px -36px rgba(15, 23, 42, 0.55);
+            --shadow-hover: 0 34px 70px -32px rgba(15, 23, 42, 0.5);
+            --danger: #b91c1c;
+            --danger-soft: rgba(185, 28, 28, 0.10);
+            --good: #047857;
+            --good-soft: rgba(4, 120, 87, 0.10);
+            --warn: #92400e;
+            --warn-soft: rgba(146, 64, 14, 0.12);
+            --ring: #0f172a;
+            --scrim: rgba(238, 242, 248, 0.55);
+            color-scheme: light;
+        }
+
+        html[data-density="compact"] {
+            --gap: 0.7rem;
+            --pad: 1rem;
+            --row-pad: 0.6rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--font-sans);
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -4;
+            background:
+                radial-gradient(60rem 60rem at 12% -10%, var(--bg-glow-1), transparent 62%),
+                radial-gradient(52rem 52rem at 92% 8%, var(--bg-glow-2), transparent 60%),
+                radial-gradient(48rem 48rem at 50% 108%, var(--bg-glow-3), transparent 62%);
+            pointer-events: none;
+        }
+
+        .orb {
+            position: fixed;
+            z-index: -3;
+            width: 22rem;
+            height: 22rem;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.55;
+            pointer-events: none;
+            animation: float 18s ease-in-out infinite;
+        }
+
+        .orb--a {
+            top: 14%;
+            left: -6rem;
+            background: var(--bg-glow-1);
+        }
+
+        .orb--b {
+            top: 42%;
+            right: -7rem;
+            background: var(--bg-glow-2);
+            animation-delay: -6s;
+        }
+
+        .orb--c {
+            bottom: -8rem;
+            left: 38%;
+            background: var(--bg-glow-3);
+            animation-delay: -11s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(1.6rem, -1.8rem, 0) scale(1.08); }
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+            color: inherit;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--ring);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+
+        .glass {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(18px);
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
+            background: var(--surface-strong);
+            background: color-mix(in srgb, var(--bg) 72%, transparent);
+            border-bottom: 1px solid var(--border);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            margin-right: auto;
+        }
+
+        .brand__mark {
+            display: grid;
+            place-items: center;
+            width: 2.4rem;
+            height: 2.4rem;
+            border-radius: 12px;
+            color: var(--accent-ink);
+            background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #ffffff));
+            box-shadow: 0 10px 26px -12px var(--accent);
+        }
+
+        .brand__mark svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .brand small {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .nav a {
+            padding: 0.5rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            transition: color 0.2s var(--ease), background 0.2s var(--ease);
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            background: var(--surface-soft);
+        }
+
+        .nav a[aria-current="page"] {
+            color: var(--text);
+            background: var(--surface-soft);
+            box-shadow: inset 0 0 0 1px var(--border);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .icon-btn {
+            display: inline-grid;
+            place-items: center;
+            width: 2.4rem;
+            height: 2.4rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-soft);
+            color: var(--text-soft);
+            cursor: pointer;
+            transition: transform 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+        }
+
+        .icon-btn:hover {
+            color: var(--text);
+            border-color: var(--border-strong);
+            background: var(--surface);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn svg {
+            width: 1.15rem;
+            height: 1.15rem;
+        }
+
+        html[data-theme="dark"] .icon-sun,
+        html[data-theme="light"] .icon-moon {
+            display: none;
+        }
+
+        .swatches {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.4rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface-soft);
+        }
+
+        .swatch {
+            width: 1.05rem;
+            height: 1.05rem;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: var(--swatch);
+            cursor: pointer;
+            transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+        }
+
+        .swatch:hover {
+            transform: scale(1.18);
+        }
+
+        .swatch[aria-pressed="true"] {
+            border-color: var(--text);
+            box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch);
+        }
+
+        .shell {
+            width: min(1180px, 100% - 2.5rem);
+            margin: clamp(1.6rem, 4vw, 3rem) auto 4rem;
+            display: flex;
+            flex-direction: column;
+            gap: var(--gap);
+        }
+
+        .messages {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.9rem;
+            animation: rise 0.5s var(--ease) both;
+        }
+
+        .toast.error {
+            border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .toast.success {
+            border-color: color-mix(in srgb, var(--good) 45%, transparent);
+            background: var(--good-soft);
+            color: var(--good);
+        }
+
+        .hero {
+            position: relative;
+            padding: clamp(1.4rem, 3.5vw, 2.4rem);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(38rem 22rem at 8% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 65%),
+                radial-gradient(30rem 20rem at 95% 100%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface-soft);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .pulse {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 0 var(--accent);
+            animation: pulse 2.4s ease-out infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); }
+            70% { box-shadow: 0 0 0 0.7rem transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
+        .hero h1 {
+            margin-top: 0.9rem;
+            font-size: clamp(1.7rem, 4.6vw, 2.9rem);
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            font-weight: 600;
+            max-width: 22ch;
+        }
+
+        .hero h1 span {
+            color: var(--accent-text);
+        }
+
+        .hero p {
+            margin-top: 0.7rem;
+            max-width: 58ch;
+            color: var(--muted);
+            font-size: clamp(0.92rem, 1.6vw, 1.02rem);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: var(--gap);
+            margin-top: 1.5rem;
+        }
+
+        .stat {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            padding: var(--pad);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--surface-strong);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+        }
+
+        .stat:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--border-strong);
+        }
+
+        .stat::after {
+            content: "";
+            position: absolute;
+            inset: auto -20% -55% auto;
+            width: 9rem;
+            height: 9rem;
+            border-radius: 50%;
+            background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 68%);
+            pointer-events: none;
+        }
+
+        .stat__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .stat__icon {
+            display: grid;
+            place-items: center;
+            width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 11px;
+            background: var(--surface-soft);
+            color: var(--accent-text);
+        }
+
+        .stat__icon svg {
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+
+        .stat__label {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .stat__value {
+            font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat__hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        .stat--late .stat__icon {
+            color: var(--danger);
+            background: var(--danger-soft);
+        }
+
+        .panel {
+            padding: var(--pad);
+        }
+
+        .panel__head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel__title {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .panel__title svg {
+            width: 1.15rem;
+            height: 1.15rem;
+            color: var(--accent-text);
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.28rem 0.7rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .filters-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+            align-items: end;
+            gap: 0.85rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .field label {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .field select,
+        .field input {
+            width: 100%;
+            padding: 0.72rem 0.85rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            color: var(--text);
+            transition: border-color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.2s var(--ease);
+        }
+
+        .field select:hover,
+        .field input:hover {
+            border-color: var(--border-strong);
+        }
+
+        .field select:focus,
+        .field input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+
+        .field select option {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.72rem 1.1rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+            white-space: nowrap;
+        }
+
+        .btn svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .btn--primary {
+            color: var(--accent-ink);
+            background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 62%, #ffffff));
+            box-shadow: 0 16px 34px -18px var(--accent);
+        }
+
+        .btn--primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 42px -18px var(--accent);
+        }
+
+        .btn--ghost {
+            border-color: var(--border);
+            background: var(--surface-soft);
+            color: var(--muted);
+        }
+
+        .btn--ghost:hover {
+            color: var(--text);
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+        }
+
+        .students {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.7rem;
+        }
+
+        .student {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--surface-soft);
+            transition: transform 0.22s var(--ease), border-color 0.22s var(--ease), background 0.22s var(--ease);
+        }
+
+        .student:hover {
+            transform: translateY(-3px);
+            border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+            background: var(--surface-strong);
+        }
+
+        .student[aria-current="true"] {
+            border-color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 12%, var(--surface-soft));
+        }
+
+        .avatar {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            width: 2.3rem;
+            height: 2.3rem;
+            border-radius: 50%;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--accent-ink);
+            background: linear-gradient(140deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #ffffff));
+        }
+
+        .student__meta {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .student__meta strong {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .student__meta small {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .student__arrow {
+            margin-left: auto;
+            color: var(--muted);
+            transition: transform 0.2s var(--ease), color 0.2s var(--ease);
+        }
+
+        .student:hover .student__arrow {
+            color: var(--accent-text);
+            transform: translateX(3px);
+        }
+
+        .student__arrow svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .user-card {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-card .avatar {
+            width: 3.2rem;
+            height: 3.2rem;
+            font-size: 1.15rem;
+        }
+
+        .user-card__body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            margin-right: auto;
+        }
+
+        .user-card__body strong {
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .user-card__body span {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .table-tools {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .search {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search svg {
+            position: absolute;
+            left: 0.7rem;
+            width: 1rem;
+            height: 1rem;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .search input {
+            width: min(280px, 60vw);
+            padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-soft);
+            font-size: 0.85rem;
+            transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+        }
+
+        .search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 640px;
+        }
+
+        thead th {
+            padding: 0.65rem 0.8rem;
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.66rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: var(--row-pad) 0.8rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+
+        tbody tr {
+            transition: background 0.2s var(--ease);
+        }
+
+        tbody tr:hover {
+            background: var(--surface-soft);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .book-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-width: 0;
+        }
+
+        .book-dot {
+            flex: 0 0 auto;
+            width: 0.6rem;
+            height: 0.6rem;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+        }
+
+        .book-cell div {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .book-cell strong {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 22ch;
+        }
+
+        .book-cell small {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 22ch;
+        }
+
+        .person-cell {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .person-cell a {
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            width: fit-content;
+            transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+        }
+
+        .person-cell a:hover {
+            color: var(--accent-text);
+            border-color: var(--accent);
+        }
+
+        .person-cell small {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--muted);
+        }
+
+        .date {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-soft);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.24rem 0.6rem;
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .badge::before {
+            content: "";
+            width: 0.4rem;
+            height: 0.4rem;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge--active {
+            color: var(--good);
+            background: var(--good-soft);
+        }
+
+        .badge--late {
+            color: var(--danger);
+            background: var(--danger-soft);
+        }
+
+        tr.is-late td {
+            background: color-mix(in srgb, var(--danger) 7%, transparent);
+        }
+
+        tr.is-late .date {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 2.4rem 1rem;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .empty svg {
+            width: 2rem;
+            height: 2rem;
+            color: var(--accent-text);
+        }
+
+        .empty strong {
+            color: var(--text-soft);
+            font-weight: 600;
+        }
+
+        .empty p {
+            font-size: 0.85rem;
+            max-width: 34ch;
+        }
+
+        .footer {
+            width: min(1180px, 100% - 2.5rem);
+            margin: 0 auto 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .footer a {
+            border-bottom: 1px solid transparent;
+            transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+        }
+
+        .footer a:hover {
+            color: var(--accent-text);
+            border-color: var(--accent);
+        }
+
+        .reveal {
+            opacity: 0;
+            animation: rise 0.65s var(--ease) forwards;
+            animation-delay: calc(min(var(--i, 0), 10) * 65ms);
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filters-form {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .filters-form .actions {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .nav {
+                display: none;
+            }
+
+            .swatches {
+                display: none;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-form {
+                grid-template-columns: 1fr;
+            }
+
+            .search input {
+                width: 100%;
+            }
+
+            .table-tools {
+                width: 100%;
+            }
+
+            .search {
+                width: 100%;
+            }
+
+            .table-wrap {
+                overflow: visible;
+            }
+
+            table {
+                min-width: 0;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tbody tr {
+                display: grid;
+                gap: 0.35rem;
+                padding: 0.8rem;
+                margin-bottom: 0.6rem;
+                border: 1px solid var(--border);
+                border-radius: var(--radius-md);
+                background: var(--surface-soft);
+            }
+
+            tbody tr:hover {
+                background: var(--surface-soft);
+            }
+
+            tbody td {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                padding: 0.2rem 0;
+                border-bottom: none;
+                text-align: right;
+            }
+
+            tbody td::before {
+                content: attr(data-label);
+                font-family: var(--font-mono);
+                font-size: 0.64rem;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--muted);
+                text-align: left;
+            }
+
+            tbody td[colspan] {
+                display: block;
+                text-align: center;
+            }
+
+            tbody td[colspan]::before {
+                content: none;
+            }
+
+            .book-cell {
+                text-align: left;
+            }
+
+            .book-cell strong,
+            .book-cell small {
+                max-width: none;
+                white-space: normal;
+            }
+
+            .empty-row {
+                padding: 0;
+                border: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+            }
+
+            .reveal {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb--a" aria-hidden="true"></div>
+    <div class="orb orb--b" aria-hidden="true"></div>
+    <div class="orb orb--c" aria-hidden="true"></div>
+
+    <header class="topbar">
+        <a class="brand" href="{% url 'Catalogo' %}">
+            <span class="brand__mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path>
+                </svg>
+            </span>
+            <span>
+                Biblioteca
+                <small>Painel</small>
+            </span>
+        </a>
+
+        <nav class="nav" aria-label="Navegação principal">
+            <a href="{% url 'Catalogo' %}">Catálogo</a>
+            <a href="{% url 'admin_base' %}">Painel</a>
+            <a href="{% url 'Analise_consultas' %}" aria-current="page">Análise</a>
+        </nav>
+
+        <div class="controls">
+            <div class="swatches" role="group" aria-label="Cor de destaque">
+                <button class="swatch" type="button" data-accent="#34d399" style="--swatch:#34d399" aria-label="Destaque verde" aria-pressed="true"></button>
+                <button class="swatch" type="button" data-accent="#60a5fa" style="--swatch:#60a5fa" aria-label="Destaque azul" aria-pressed="false"></button>
+                <button class="swatch" type="button" data-accent="#a78bfa" style="--swatch:#a78bfa" aria-label="Destaque violeta" aria-pressed="false"></button>
+                <button class="swatch" type="button" data-accent="#fbbf24" style="--swatch:#fbbf24" aria-label="Destaque âmbar" aria-pressed="false"></button>
+                <button class="swatch" type="button" data-accent="#f472b6" style="--swatch:#f472b6" aria-label="Destaque rosa" aria-pressed="false"></button>
+            </div>
+
+            <button class="icon-btn" type="button" id="density-toggle" aria-label="Alternar densidade da interface" title="Alternar densidade">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 17h16"></path>
+                </svg>
+            </button>
+
+            <button class="icon-btn" type="button" id="theme-toggle" aria-label="Alternar tema claro e escuro" title="Alternar tema">
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>
+                </svg>
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m6.34 17.66-1.41 1.41"></path>
+                    <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="shell">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="toast {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <section class="hero glass">
+            <span class="eyebrow"><span class="pulse" aria-hidden="true"></span> Análise em tempo real</span>
+            <h1>Empréstimos da <span>biblioteca</span> em um só lugar</h1>
+            <p>Acompanhe os livros em circulação, filtre por turma e abra a ficha de cada aluno para ver o histórico completo.</p>
+
+            <div class="stats">
+                <article class="stat reveal" style="--i:0">
+                    <div class="stat__top">
+                        <span class="stat__label">Empréstimos ativos</span>
+                        <span class="stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <span class="stat__value" data-count="{{ TotalEmprestados }}">0</span>
+                    <span class="stat__hint">Livros fora da estante neste momento</span>
+                </article>
+
+                <article class="stat reveal" style="--i:1">
+                    <div class="stat__top">
+                        <span class="stat__label">Turmas</span>
+                        <span class="stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <span class="stat__value" data-count="{{ Todas_Turmas|length }}">0</span>
+                    <span class="stat__hint">Turmas cadastradas no sistema</span>
+                </article>
+
+                <article class="stat reveal" style="--i:2">
+                    <div class="stat__top">
+                        <span class="stat__label">Alunos na turma</span>
+                        <span class="stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                    </div>
+                    <span class="stat__value" data-count="{% if turma_selecionada %}{{ Alunos_da_Turma_Selecionada|length }}{% else %}0{% endif %}">0</span>
+                    <span class="stat__hint">
+                        {% if turma_selecionada %}
+                            {{ turma_selecionada.turma }}
+                        {% else %}
+                            Selecione uma turma para ver
+                        {% endif %}
+                    </span>
+                </article>
+
+                <article class="stat stat--late reveal" style="--i:3">
+                    <div class="stat__top">
+                        <span class="stat__label">Devoluções atrasadas</span>
+                        <span class="stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <path d="M12 7v5l3 2"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <span class="stat__value" data-count="0" id="stat-late">0</span>
+                    <span class="stat__hint">Empréstimos com prazo vencido</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel glass reveal" style="--i:4" aria-labelledby="filtros-titulo">
+            <div class="panel__head">
+                <h2 class="panel__title" id="filtros-titulo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"></path>
+                    </svg>
+                    Filtrar consultas
+                </h2>
+                {% if turma_selecionada %}
+                <span class="chip">Turma: {{ turma_selecionada.turma }}</span>
+                {% endif %}
+            </div>
+
+            <form class="filters-form" method="get" action="">
+                <div class="field">
+                    <label for="turma_id">Turma</label>
+                    <select id="turma_id" name="turma_id">
+                        <option value="">Todas as turmas</option>
+                        {% for turma in Todas_Turmas %}
+                        <option value="{{ turma.id }}" {% if turma_selecionada and turma_selecionada.id == turma.id %}selected{% endif %}>{{ turma.turma }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="usuario_id">ID do usuário</label>
+                    <input id="usuario_id" name="usuario_id" type="number" min="1" inputmode="numeric" placeholder="Ex.: 12" value="{{ request.GET.usuario_id }}">
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn--primary" type="submit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m21 21-4.3-4.3"></path>
+                            <circle cx="11" cy="11" r="7"></circle>
+                        </svg>
+                        Aplicar
+                    </button>
+                    <a class="btn btn--ghost" href="{% url 'Analise_consultas' %}">Limpar</a>
+                </div>
+            </form>
+        </section>
+
+        {% if turma_selecionada %}
+        <section class="panel glass reveal" style="--i:5" aria-labelledby="turma-titulo">
+            <div class="panel__head">
+                <h2 class="panel__title" id="turma-titulo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Alunos da turma {{ turma_selecionada.turma }}
+                </h2>
+                <span class="chip">{{ Alunos_da_Turma_Selecionada|length }} aluno{{ Alunos_da_Turma_Selecionada|length|pluralize }}</span>
+            </div>
+
+            <div class="students">
+                {% for aluno in Alunos_da_Turma_Selecionada %}
+                <a class="student reveal" style="--i:{{ forloop.counter0 }}" href="{% url 'Analise_consultas' %}?turma_id={{ turma_selecionada.id }}&amp;usuario_id={{ aluno.id }}" {% if Usuario_selecionado and Usuario_selecionado.id == aluno.id %}aria-current="true"{% endif %}>
+                    <span class="avatar" aria-hidden="true">{{ aluno.nome|slice:":1"|upper }}</span>
+                    <span class="student__meta">
+                        <strong>{{ aluno.nome }}</strong>
+                        <small>@{{ aluno.usuario.username }}</small>
+                    </span>
+                    <span class="student__arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="m12 5 7 7-7 7"></path>
+                        </svg>
+                    </span>
+                </a>
+                {% empty %}
+                <div class="empty" style="grid-column:1/-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <strong>Nenhum aluno nesta turma</strong>
+                    <p>Assim que houver alunos cadastrados, eles aparecerão aqui.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if Usuario_selecionado %}
+        <section class="panel glass user-card reveal" style="--i:6" aria-labelledby="usuario-titulo">
+            <span class="avatar" aria-hidden="true">{{ Usuario_selecionado.nome|slice:":1"|upper }}</span>
+            <div class="user-card__body">
+                <strong id="usuario-titulo">{{ Usuario_selecionado.nome }}</strong>
+                <span>@{{ Usuario_selecionado.usuario.username }} · {{ Usuario_selecionado.turma.turma }}</span>
+            </div>
+            <a class="btn btn--primary" href="{% url 'inf_usuario' Usuario_selecionado.id %}">
+                Abrir ficha
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                </svg>
+            </a>
+        </section>
+        {% endif %}
+
+        <section class="panel glass reveal" style="--i:7" aria-labelledby="emprestimos-titulo">
+            <div class="panel__head">
+                <h2 class="panel__title" id="emprestimos-titulo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path>
+                        <path d="M8 7h8"></path>
+                        <path d="M8 11h6"></path>
+                    </svg>
+                    Livros emprestados
+                </h2>
+                <div class="table-tools">
+                    <span class="chip">{{ TotalEmprestados }} ativo{{ TotalEmprestados|pluralize }}</span>
+                    <div class="search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m21 21-4.3-4.3"></path>
+                            <circle cx="11" cy="11" r="7"></circle>
+                        </svg>
+                        <input type="search" id="table-search" placeholder="Buscar livro ou aluno" aria-label="Buscar livro ou aluno">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Livro</th>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Empréstimo</th>
+                            <th scope="col">Devolver até</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loans-body">
+                        {% for emp in LivrosEmprestados %}
+                        <tr class="reveal" style="--i:{{ forloop.counter0 }}" data-prazo="{{ emp.data_devolucao_prevista|date:'Y-m-d' }}" data-search="{{ emp.livro.titulo|lower }} {{ emp.livro.autor|lower }} {{ emp.pessoa.nome|lower }}">
+                            <td data-label="Livro">
+                                <div class="book-cell">
+                                    <span class="book-dot" aria-hidden="true"></span>
+                                    <div>
+                                        <strong>{{ emp.livro.titulo }}</strong>
+                                        <small>{{ emp.livro.autor }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Aluno">
+                                <div class="person-cell">
+                                    <a href="{% url 'inf_usuario' emp.pessoa.id %}">{{ emp.pessoa.nome }}</a>
+                                    <small>{{ emp.pessoa.turma.turma }}</small>
+                                </div>
+                            </td>
+                            <td data-label="Empréstimo"><span class="date">{{ emp.data_emprestimo|date:"d/m/Y" }}</span></td>
+                            <td data-label="Devolver até">
+                                <span class="date">{{ emp.data_devolucao_prevista|date:"d/m/Y"|default:"—" }}</span>
+                            </td>
+                            <td data-label="Status">
+                                <span class="badge badge--active">Emprestado</span>
+                                <span class="badge badge--late" hidden>Atrasado</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr class="empty-row">
+                            <td colspan="5">
+                                <div class="empty">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path>
+                                    </svg>
+                                    <strong>Nenhum empréstimo ativo</strong>
+                                    <p>Todos os livros estão disponíveis na estante no momento.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="empty-row" id="no-results" hidden>
+                            <td colspan="5">
+                                <div class="empty">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="m21 21-4.3-4.3"></path>
+                                        <circle cx="11" cy="11" r="7"></circle>
+                                    </svg>
+                                    <strong>Nada encontrado</strong>
+                                    <p>Tente buscar por outro título de livro ou nome de aluno.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <span>Biblioteca · painel administrativo</span>
+        <span><a href="{% url 'admin_base' %}">Voltar ao painel</a> · <a href="{% url 'Catalogo' %}">Ir ao catálogo</a></span>
+    </footer>
+
+    <script>
+        (function () {
+            var root = document.documentElement;
+            var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            function store(key, value) {
+                try { localStorage.setItem(key, value); } catch (e) {}
+            }
+
+            var themeToggle = document.getElementById("theme-toggle");
+            function syncThemeLabel() {
+                var isDark = root.getAttribute("data-theme") === "dark";
+                themeToggle.setAttribute("aria-label", isDark ? "Ativar tema claro" : "Ativar tema escuro");
+            }
+            syncThemeLabel();
+            themeToggle.addEventListener("click", function () {
+                var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+                root.setAttribute("data-theme", next);
+                store("bib-theme", next);
+                syncThemeLabel();
+            });
+
+            var densityToggle = document.getElementById("density-toggle");
+            densityToggle.addEventListener("click", function () {
+                var next = root.getAttribute("data-density") === "compact" ? "comfortable" : "compact";
+                root.setAttribute("data-density", next);
+                store("bib-density", next);
+            });
+
+            var swatches = document.querySelectorAll(".swatch");
+            var savedAccent = root.style.getPropertyValue("--accent").trim();
+            swatches.forEach(function (swatch) {
+                if (savedAccent && swatch.dataset.accent.toLowerCase() === savedAccent.toLowerCase()) {
+                    swatch.setAttribute("aria-pressed", "true");
+                } else if (!savedAccent && swatch.dataset.accent === "#34d399") {
+                    swatch.setAttribute("aria-pressed", "true");
+                } else if (savedAccent) {
+                    swatch.setAttribute("aria-pressed", "false");
+                }
+                swatch.addEventListener("click", function () {
+                    var color = swatch.dataset.accent;
+                    root.style.setProperty("--accent", color);
+                    swatches.forEach(function (item) {
+                        item.setAttribute("aria-pressed", item === swatch ? "true" : "false");
+                    });
+                    store("bib-accent", color);
+                });
+            });
+
+            function animateCount(el) {
+                var target = parseInt(el.getAttribute("data-count"), 10);
+                if (isNaN(target)) return;
+                if (reduceMotion || target === 0) {
+                    el.textContent = target;
+                    return;
+                }
+                var start = performance.now();
+                var duration = 900;
+                function tick(now) {
+                    var progress = Math.min((now - start) / duration, 1);
+                    var eased = 1 - Math.pow(1 - progress, 3);
+                    el.textContent = Math.round(target * eased);
+                    if (progress < 1) requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
+            }
+
+            document.querySelectorAll("[data-count]").forEach(function (el, index) {
+                setTimeout(function () { animateCount(el); }, reduceMotion ? 0 : 220 + index * 90);
+            });
+
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var lateCount = 0;
+            var rows = document.querySelectorAll("#loans-body tr[data-prazo]");
+            rows.forEach(function (row) {
+                var prazo = row.getAttribute("data-prazo");
+                if (!prazo) return;
+                var parts = prazo.split("-");
+                if (parts.length !== 3) return;
+                var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                date.setHours(0, 0, 0, 0);
+                if (date < today) {
+                    lateCount += 1;
+                    row.classList.add("is-late");
+                    var active = row.querySelector(".badge--active");
+                    var late = row.querySelector(".badge--late");
+                    if (active) active.hidden = true;
+                    if (late) late.hidden = false;
+                }
+            });
+            var statLate = document.getElementById("stat-late");
+            if (statLate) {
+                statLate.setAttribute("data-count", String(lateCount));
+                animateCount(statLate);
+            }
+
+            var searchInput = document.getElementById("table-search");
+            var noResults = document.getElementById("no-results");
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    var term = searchInput.value.trim().toLowerCase();
+                    var visible = 0;
+                    rows.forEach(function (row) {
+                        var haystack = row.getAttribute("data-search") || "";
+                        var match = haystack.indexOf(term) !== -1;
+                        row.hidden = !match;
+                        if (match) visible += 1;
+                    });
+                    if (noResults) noResults.hidden = !(rows.length > 0 && visible === 0);
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

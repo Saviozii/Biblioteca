@@ -26,8 +26,9 @@ def recomendações():
     ).order_by('-total_emprestimos')[:10]
     return mais_emprestados
 
-
-
+def histoico_livro(entidade):
+    histo = Emprestimo.objects.filter(pessoa=entidade).select_related("livro").order_by("-data_emprestimo")
+    return histo
 
 #pagina usuario:
 def pedir_livro(pessoa,livro,prazo):
@@ -59,22 +60,11 @@ def adcionar_livro(request):
 def livros_emprestados():
     emprestados = Emprestimo.objects.filter(status="E")
     total_emprestados = Emprestimo.objects.filter(status="E").count()
-    return emprestados, total_emprestados
+    return emprestados, total_emprestados 
 
 
-def efetuar_devolução(request,emprestimo_id):
-    
-    if request.method != "POST":
-        return redirect ('admin_base')
-    
-    emprestimo = get_object_or_404(
-        Emprestimo,
-        id=emprestimo_id
-    )
-
+def efetuar_devolução(emprestimo):
     if emprestimo.status == "E":
         emprestimo.status = "D"
         emprestimo.save()
-        messages.success(request,f"O Livro {emprestimo.livro.titulo} foi devolvido com sucesso!.")
-        return redirect ('admin_base')
 
