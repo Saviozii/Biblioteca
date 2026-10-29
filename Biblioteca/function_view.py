@@ -1,5 +1,5 @@
 from .forms import Form_Livro
-from .models import Livro, Turmas, Emprestimo
+from .models import Livro, Turmas, Emprestimo, Pessoa
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
@@ -12,6 +12,10 @@ def todas_turmas():
     turma = Turmas.objects.all()
     return turma
 
+def alunos_da_Turma(turma_id):
+    consulta = Pessoa.objects.filter(turma_id=turma_id).select_related('usuario', 'turma')
+    return consulta
+
 def todos_livros():
     livros = Livro.objects.all()
     return livros
@@ -21,6 +25,7 @@ def recomendações():
         total_emprestimos=Count('emprestimos')
     ).order_by('-total_emprestimos')[:10]
     return mais_emprestados
+
 
 
 
@@ -72,3 +77,4 @@ def efetuar_devolução(request,emprestimo_id):
         emprestimo.save()
         messages.success(request,f"O Livro {emprestimo.livro.titulo} foi devolvido com sucesso!.")
         return redirect ('admin_base')
+

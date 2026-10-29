@@ -3,7 +3,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from contas.views import registrar_user_view,login_view
-from Biblioteca.views import base_catalogo,base_admin,inf_livro,adcionar_livro_view
+from Biblioteca.views import base_catalogo,base_admin,inf_livro,adcionar_livro_view, Usuario_inf
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -13,4 +13,5 @@ urlpatterns = [
     path('Admin_Page/',base_admin,name="admin_base"),
     path('Admin_Page/adcionar_livro.',adcionar_livro_view,name="adcionar_livro"),
     path('inf_livro/<int:livro_id>/', inf_livro, name="inf_livro"),
+    path('inf_usuario/<int:usuario_id>/',Usuario_inf, name="inf_usuario"),
 ]
