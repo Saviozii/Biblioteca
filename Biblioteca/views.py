@@ -6,7 +6,8 @@ from django.shortcuts import render, redirect
 from .function_view import (todos_livros, recomendações, 
                             pedir_livro, adcionar_livro, 
                             todas_turmas, alunos_da_Turma,
-                            livros_emprestados, histoico_livro)
+                            livros_emprestados, histoico_livro,
+                            efetuar_devolução)
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
@@ -90,3 +91,20 @@ def Usuario_inf(request,usuario_id):
      return render(request,"inf_usuario.html",{
           "usuario":usuario,"Historico":historico
           })
+
+@user_passes_test(is_staff, login_url='login')
+def devolucoes_livro(request):
+    emprestados, total_emprestados = livros_emprestados()
+
+    if request.method == "POST":
+        emprestimo_id = request.POST.get("emprestimo_id")
+        if emprestimo_id and emprestimo_id.isdigit():
+            emprestimo = get_object_or_404(Emprestimo, id=emprestimo_id)
+            efetuar_devolução(emprestimo)
+            messages.success(request, "Devolução registrada com sucesso.")
+            return redirect("devolucoes_livro")
+        messages.error(request, "Empréstimo inválido.")
+
+    return render(request, "devolucoes.html", {
+        "Livros_emprestados": emprestados,
+        "TotalEmprestados": total_emprestados,})
