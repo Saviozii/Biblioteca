@@ -49,6 +49,7 @@ def inf_livro(request,livro_id):
 #ADMIN
 @user_passes_test(is_staff, login_url='login')
 def base_admin(request):
+     
      return render(request,"base_admin.html")
 
 @user_passes_test(is_staff, login_url='login')
@@ -86,7 +87,36 @@ def adcionar_livro_view(request):
 @user_passes_test(is_staff, login_url='login')
 def Usuario_inf(request,usuario_id):
      usuario = get_object_or_404(Pessoa,id=usuario_id)
-     historico = histoico_livro(usuario)    
+     historico = list(histoico_livro(usuario))
+     hoje = date.today()
+
+     ativos = [emp for emp in historico if emp.status == "E"]
+     devolvidos = [emp for emp in historico if emp.status == "D"]
+
+     for emp in historico:
+          emp.atrasado = False
+          emp.dias_restantes = None
+          emp.dias_atraso = 0
+          if emp.status == "E" and emp.data_devolucao_prevista:
+               emp.dias_restantes = (emp.data_devolucao_prevista - hoje).days
+               if emp.dias_restantes < 0:
+                    emp.atrasado = True
+                    emp.dias_atraso = abs(emp.dias_restantes)
+
+     atrasados = [emp for emp in ativos if emp.atrasado]
+     proximo_vencimento = min(
+          (emp.data_devolucao_prevista for emp in ativos if emp.data_devolucao_prevista),
+          default=None,
+     )
+
      return render(request,"inf_usuario.html",{
-          "usuario":usuario,"Historico":historico
+          "usuario":usuario,
+          "Historico":historico,
+          "Resumo":{
+               "total": len(historico),
+               "ativos": len(ativos),
+               "devolvidos": len(devolvidos),
+               "atrasados": len(atrasados),
+          },
+          "Proximo_vencimento":proximo_vencimento,
           })

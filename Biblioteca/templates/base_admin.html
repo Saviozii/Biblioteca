@@ -1,100 +1,213 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel administrativo</title>
+    <title>Painel Administrativo | Biblioteca</title>
     <style>
+        :root {
+            --bg: #0f1226;
+            --bg-2: #171a36;
+            --card: #1e2245;
+            --card-hover: #262b57;
+            --accent: #7c5cff;
+            --accent-2: #38bdf8;
+            --text: #e8eaf6;
+            --muted: #9aa0c3;
+            --success: #34d399;
+            --danger: #f87171;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f2f4f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top left, var(--bg-2), var(--bg) 60%);
+            color: var(--text);
             min-height: 100vh;
-            margin: 0;
-            padding: 24px;
         }
-        .card {
-            background: #fff;
-            padding: 32px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 480px;
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px;
+            background: rgba(23, 26, 54, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        h1 {
-            margin-top: 0;
-            font-size: 22px;
-            text-align: center;
-        }
-        p {
-            color: #4b5563;
-            font-size: 14px;
-            text-align: center;
-        }
-        .acoes {
-            margin-top: 24px;
-            display: grid;
+
+        .brand {
+            display: flex;
+            align-items: center;
             gap: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
         }
-        .botao {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background: #2563eb;
-            color: #fff;
-            border-radius: 4px;
-            font-size: 15px;
-            text-align: center;
+
+        .brand span.logo {
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            font-size: 1.3rem;
+        }
+
+        .user-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .user-box strong { color: var(--text); }
+
+        .btn-sair {
             text-decoration: none;
-            box-sizing: border-box;
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: 0.2s;
         }
-        .botao:hover {
-            background: #1d4ed8;
+
+        .btn-sair:hover { background: var(--danger); border-color: var(--danger); }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
         }
-        .voltar {
-            display: block;
-            margin-top: 16px;
-            font-size: 14px;
-            text-align: center;
-            color: #2563eb;
-        }
-        .messages {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 16px;
-        }
+
+        .welcome h1 { font-size: 2rem; margin-bottom: 6px; }
+        .welcome p { color: var(--muted); margin-bottom: 32px; }
+
+        .messages { list-style: none; margin-bottom: 24px; }
         .messages li {
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: var(--card);
+            border-left: 4px solid var(--accent-2);
+        }
+        .messages li.success { border-left-color: var(--success); }
+        .messages li.error { border-left-color: var(--danger); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 26px;
+            border-radius: var(--radius);
+            background: var(--card);
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            background: var(--card-hover);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .card .icon {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        }
+
+        .card h2 { font-size: 1.15rem; }
+        .card p { color: var(--muted); font-size: 0.92rem; line-height: 1.4; }
+
+        footer {
             text-align: center;
-            background: #dcfce7;
-            color: #166534;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; gap: 12px; }
+            .welcome h1 { font-size: 1.6rem; }
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Painel administrativo</h1>
+
+    <header>
+        <div class="brand">
+            <span class="logo">📚</span>
+            Biblioteca • Painel Admin
+        </div>
+        <div class="user-box">
+            <span>Olá, <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+        </div>
+    </header>
+
+    <main>
+        <section class="welcome">
+            <h1>Painel Administrativo</h1>
+            <p>Gerencie o acervo, acompanhe empréstimos e consulte alunos e turmas.</p>
+        </section>
 
         {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
 
-        <p>Gerencie o acervo e os empréstimos da biblioteca.</p>
+        <section class="grid">
+            <a class="card" href="{% url 'adcionar_livro' %}">
+                <div class="icon">➕</div>
+                <h2>Adicionar livro</h2>
+                <p>Cadastre novos livros no acervo da biblioteca.</p>
+            </a>
 
-        <div class="acoes">
-            <a class="botao" href="{% url 'Analise_consultas' %}">Análise de empréstimos</a>
-            <a class="botao" href="{% url 'adcionar_livro' %}">Adicionar livros</a>
-        </div>
+            <a class="card" href="{% url 'Analise_consultas' %}">
+                <div class="icon">📊</div>
+                <h2>Análise e consultas</h2>
+                <p>Veja livros emprestados, turmas e alunos.</p>
+            </a>
 
-        <a class="voltar" href="{% url 'Catalogo' %}">Voltar para o catálogo</a>
-    </div>
+            <a class="card" href="{% url 'Catalogo' %}">
+                <div class="icon">📖</div>
+                <h2>Ver catálogo</h2>
+                <p>Visualize o catálogo como os alunos o veem.</p>
+            </a>
+
+            <a class="card" href="/admin/">
+                <div class="icon">⚙️</div>
+                <h2>Django Admin</h2>
+                <p>Acesse o painel padrão do Django para gerenciar os dados.</p>
+            </a>
+        </section>
+    </main>
+
+    <footer>
+        &copy; {% now "Y" %} Biblioteca
+    </footer>
+
 </body>
 </html>

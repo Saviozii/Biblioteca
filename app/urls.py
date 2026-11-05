@@ -15,4 +15,4 @@ urlpatterns = [
     path('Admin_Page/adcionar_livro.',adcionar_livro_view,name="adcionar_livro"),
     path('inf_livro/<int:livro_id>/', inf_livro, name="inf_livro"),
     path('inf_usuario/<int:usuario_id>/',Usuario_inf, name="inf_usuario"),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

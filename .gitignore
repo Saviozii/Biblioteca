@@ -4,3 +4,4 @@ venv
 db.sqlite3
 Biblioteca/__pycache__
 app/__pycache__
+contas/__pycache__
