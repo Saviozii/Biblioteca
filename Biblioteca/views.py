@@ -138,3 +138,4 @@ def devolucoes_livro(request):
     return render(request, "devolucoes.html", {
         "Livros_emprestados": emprestados,
         "TotalEmprestados": total_emprestados,})
+

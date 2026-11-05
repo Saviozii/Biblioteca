@@ -20,6 +20,14 @@ def todos_livros():
     livros = Livro.objects.all()
     return livros
 
+def livros_autor(autor_escolhido):
+    livro_por_autor = Livro.objects.filter(autor=autor_escolhido)
+    return livro_por_autor
+
+def livros_generos(genero):
+    livro_por_genero = Livro.objects.filter(generos=genero)
+    return livro_por_genero
+
 def recomendações():
     mais_emprestados = Livro.objects.annotate(
         total_emprestimos=Count('emprestimos')
