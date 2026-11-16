@@ -7,11 +7,13 @@ from .function_view import (todos_livros, recomendações,
                             pedir_livro, adcionar_livro, 
                             todas_turmas, alunos_da_Turma,
                             livros_emprestados, histoico_livro,
-                            efetuar_devolução)
+                            efetuar_devolução, pedidos_pendentes,
+                            todos_pedidos, gerar_token,conceder_livro)
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from datetime import date, timedelta
+import qrcode
 
 #Verifica se é adm
 def is_staff(usuario):
@@ -36,12 +38,12 @@ def inf_livro(request,livro_id):
         if pessoa is None:
                 messages.error(request,"Usuario não possui cadastro.")
         else:
-             if livro.esta_emprestado:
-                  messages.error(request,f"O livro '{livro.titulo}' já está emprestado.")
-             else:
-                  pedir_livro(pessoa,livro,prazo)
-                  messages.success(request,f"Boa Leitura!!!😁, O livro deve ser entregue até dia {prazo:%d/%m/%Y}")
-                  return redirect("Catalogo")
+            if livro.esta_emprestado:
+                messages.error(request,f"O livro '{livro.titulo}' já está emprestado.")
+            else:
+                token_gerado = gerar_token()
+                pedidos_livros(pessoa,livro,token_gerado)
+                
   
     return render(request, "inf_livro.html", {"livro": livro})
 
@@ -138,4 +140,22 @@ def devolucoes_livro(request):
     return render(request, "devolucoes.html", {
         "Livros_emprestados": emprestados,
         "TotalEmprestados": total_emprestados,})
+
+@user_passes_test(is_staff, login_url='login')
+def inf_pedido(request,token):
+     usuario = get_object_or_404(Pessoa,id=usuario_id)
+     livro = get_object_or_404(Livro,id=livro_id)
+
+     if request.method == 'POST':
+        conceder_livro(usuario,livro,)
+
+     return render(request,"inf_pedido.html",{"Usuario":usuario,
+                                            "Livro":livro})
+
+
+def pedidos_livros(request):
+    pedidos_pendentes()
+    
+    return render(request,"Pedidos.htlm",{"TODOS_PEDIDOS":todos_pedidos(),
+                                         "PEDIDOS_PENDENTES":pedidos_pendentes()})
 

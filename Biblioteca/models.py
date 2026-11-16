@@ -45,7 +45,7 @@ class Emprestimo(models.Model):
     data_devolvido = models.DateTimeField(null=True, blank=True)
     STATUS = (
         ("E","Emprestado"),
-        ("D","Devolvido"),
+        ("D","Devolvido"),   
     )
     status= models.CharField(max_length=1,choices=STATUS,default="E")
 
@@ -58,6 +58,16 @@ class Emprestimo(models.Model):
             )
         ]
 
+class Pedido(models.Model):
+    Token = models.CharField(max_length=100,unique=True,editable=False) 
+    pessoa = models.ForeignKey(Pessoa,on_delete=models.CASCADE,related_name="pedido",null=True)
+    livro = models.ForeignKey(Livro,on_delete=models.CASCADE,related_name="pedido",null=True)
+    STATUS = (
+        ("S","Sucesso"),
+        ("P","Pendente"),
+        ("R","Recusado"),   
+    )
+    status = models.CharField(max_length=1,choices=STATUS,default="P")
 
 
 

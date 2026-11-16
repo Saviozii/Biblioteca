@@ -1,11 +1,16 @@
 from .forms import Form_Livro
-from .models import Livro, Turmas, Emprestimo, Pessoa
+from .models import Livro, Turmas, Emprestimo, Pessoa, Pedido
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.db import transaction
 from datetime import date, timedelta
+import secrets
+
+def gerar_token():
+    token = secrets.token_urlsafe(32)
+    return token
 #Consultas:
 
 def todas_turmas():
@@ -38,13 +43,15 @@ def histoico_livro(entidade):
     histo = Emprestimo.objects.filter(pessoa=entidade).select_related("livro").order_by("-data_emprestimo")
     return histo
 
-#pagina usuario:
-def pedir_livro(pessoa,livro,prazo):
-    Emprestimo.objects.create(
-        pessoa=pessoa,
-        livro=livro,
-        data_devolucao_prevista=prazo,
-    )
+def pedidos_pendentes():
+    all_pendentes = Pedido.objects.filter(status="P")
+    return all_pendentes
+
+def todos_pedidos():
+    all_pedidos = Pedido.objects.all()
+    return all_pedidos
+
+#pagina usuario:    
 
 #Para pagina adm:
 
@@ -69,6 +76,23 @@ def livros_emprestados():
     emprestados = Emprestimo.objects.filter(status="E")
     total_emprestados = Emprestimo.objects.filter(status="E").count()
     return emprestados, total_emprestados 
+
+def pedir_livro(pessoa,livro,token_gerado):
+    Pedido.objects.create(
+        pessoa=pessoa,
+        livro=livro,
+        Token = token_gerado,
+    )
+
+def conceder_livro(pessoa,livro):
+    data_agr = datetime.now()
+    prazo = data_agr + timedelta(days=15)
+
+    Emprestimo.objects.create(
+        pessoa=pessoa,
+        livro=livro,
+        data_devolucao_prevista=prazo
+    )    
 
 
 def efetuar_devolução(emprestimo):
